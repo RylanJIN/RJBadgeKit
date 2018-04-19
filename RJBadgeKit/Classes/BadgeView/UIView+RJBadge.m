@@ -23,7 +23,8 @@ static const CGFloat kRJBadgeDefaultRadius = 3.f;
         self.customView.hidden = NO;
         self.badge.hidden      = YES;
     } else {        
-        CGFloat width = kRJBadgeDefaultRadius * 2;
+        float fWid = self.badgeRadius ?: kRJBadgeDefaultRadius;
+        CGFloat width = fWid * 2;
         CGRect rect   = CGRectMake(CGRectGetWidth(self.frame), -width, width, width);
         
         self.badge.frame  = rect;
@@ -110,7 +111,8 @@ static const CGFloat kRJBadgeDefaultRadius = 3.f;
 {
     UILabel *bLabel   = objc_getAssociatedObject(self, _cmd);
     if (!bLabel) {
-        CGFloat width = kRJBadgeDefaultRadius * 2;
+        float fWid = self.badgeRadius ?: kRJBadgeDefaultRadius;
+        CGFloat width = fWid * 2;
         CGRect rect   = CGRectMake(CGRectGetWidth(self.frame), -width, width, width);
         bLabel                 = [[UILabel alloc] initWithFrame:rect];
         bLabel.textAlignment   = NSTextAlignmentCenter;
@@ -123,7 +125,7 @@ static const CGFloat kRJBadgeDefaultRadius = 3.f;
         CGFloat offsetX        = CGRectGetWidth(self.frame) + 2 + self.badgeOffset.x;
         bLabel.center          = CGPointMake(offsetX, self.badgeOffset.y);
 
-        bLabel.layer.cornerRadius  = kRJBadgeDefaultRadius;
+        bLabel.layer.cornerRadius  = fWid;
         bLabel.layer.masksToBounds = YES;
         bLabel.hidden              = YES;
         
