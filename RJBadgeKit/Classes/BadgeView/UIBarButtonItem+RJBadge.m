@@ -31,41 +31,70 @@
 
 - (UIView *)badgeView
 {
-// iOS10 iOS9 iOS8 UINavigationButton → UIImageView;
-// iOS11 _UIButtonBarButton → _UIModernBarButton → UIImageView
     UIView *bottomView = [self valueForKeyPath:@"_view"];
-    UIView *imageView = nil; // UIImageView
+    UIView *targetView = nil;
     if (bottomView) {
-        imageView = [self findImageViewInView:bottomView];
-        imageView.clipsToBounds = NO;
+        targetView = [self findTargetViewInView:bottomView];
+        targetView.clipsToBounds = NO;
     }
-    return imageView;
+    return targetView;
 }
 
-- (UIView *)findImageViewInView:(UIView *)view
+
+// iOS10 iOS9 iOS8 (UINavigationBar →)
+
+//  UINavigationButton → UIImageView   //initWithImage,initWithBarButtonSystemItem
+//  UINavigationButton → UIButtonLabel(UILable)   //initWithBarButtonSystemItem,initWithTitle
+//  CustomView                          //initWithCustomView
+
+
+// iOS11 (UINavigationBar → _UINavigationBarContentView → _UIButtonBarStackView →)
+
+//  _UIButtonBarButton → _UIModernBarButton → UIImageView   //initWithImage,initWithBarButtonSystemItem
+//  _UIButtonBarButton → _UIModernBarButton → UIButtonLabel(UILable)    //initWithBarButtonSystemItem,initWithTitle
+// (_UIButtonBarButton → _UITAMICAdaptorView →) CustomView           //initWithCustomView
+
+
+- (UIView *)findTargetViewInView:(UIView *)view
 {
     __block UIView *targetView = nil;
-    [view.subviews enumerateObjectsUsingBlock:^(UIView *subview0, NSUInteger idx0, BOOL *stop0) {
-        if ([subview0 isKindOfClass:UIImageView.class]) {
-            
-            targetView = subview0;
-            
-        }else if ([subview0 isKindOfClass:NSClassFromString(@"_UIModernBarButton")]){
-            
-            [subview0.subviews enumerateObjectsUsingBlock:^(UIView *subview1, NSUInteger idx1, BOOL *stop1) {
-                if ([subview1 isKindOfClass:UIImageView.class]) {
-                    targetView = subview1;
+
+    if ([[UIDevice currentDevice].systemVersion doubleValue] < 10.9) {
+        if ([view isKindOfClass:NSClassFromString(@"UINavigationButton")]) {
+            [view.subviews enumerateObjectsUsingBlock:^(UIView *subview, NSUInteger idx, BOOL *stop) {
+                if ([subview isKindOfClass:UIImageView.class] ||
+                    [subview isKindOfClass:NSClassFromString(@"UIButtonLabel")]) {
+                    targetView = subview;
                 }
                 if (targetView) {
-                    *stop1 = YES;
+                    *stop = YES;
                 }
             }];
-            
+        }else{
+            targetView = view;
         }
-        if (targetView) {
-            *stop0 = YES;
+    }else{
+        if ([view isKindOfClass:NSClassFromString(@"_UIButtonBarButton")]) {
+
+            [view.subviews enumerateObjectsUsingBlock:^(UIView *subview, NSUInteger idx, BOOL *stop) {
+                if ([subview isKindOfClass:NSClassFromString(@"_UIModernBarButton")]) {
+                    if ([subview.subviews.firstObject isKindOfClass:UIImageView.class] ||
+                        [subview.subviews.firstObject isKindOfClass:NSClassFromString(@"UIButtonLabel")]) {
+                        targetView = subview.subviews.firstObject;
+                    }
+                }
+                if (targetView) {
+                    *stop = YES;
+                }
+            }];
+        }else{
+            targetView = view;
         }
-    }];
+    }
+    
+    if (targetView == nil) {
+        NSLog(@"TargetView of UIBarButtonItem Not Found!");
+    }
     return targetView;
 }
 
