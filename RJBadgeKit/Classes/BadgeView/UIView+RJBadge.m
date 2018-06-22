@@ -19,10 +19,11 @@ static const CGFloat kRJBadgeDefaultRadius = 4.f;
 #pragma mark - RJBadgeView
 - (void)showBadge
 {
-    if (self.customView) {
-        self.customView.hidden = NO;
-        self.badge.hidden      = YES;
-    } else {        
+    if (self.badgeCustomView) {
+        self.badgeCustomView.hidden   = NO;
+        self.badge.hidden             = YES;
+        [self adjustCustomViewFrame:self.badgeCustomView];
+    } else {
         self.badge.text               = @"";
         self.badge.hidden             = NO;
         [self adjustDotFrame:self.badge];
@@ -31,26 +32,31 @@ static const CGFloat kRJBadgeDefaultRadius = 4.f;
 
 - (void)showBadgeWithValue:(NSUInteger)value
 {
-    self.customView.hidden     = YES;
+    self.badgeCustomView.hidden = YES;
 
-    self.badge.hidden = (value == 0);
-    self.badge.font   = self.badgeFont;
-    self.badge.text   = (value > kRJBadgeDefaultMaximumBadgeNumber ?
-                        [NSString stringWithFormat:@"%@+", @(kRJBadgeDefaultMaximumBadgeNumber)] :
-                        [NSString stringWithFormat:@"%@" , @(value)]);
-    
+    self.badge.hidden  = (value == 0);
+    self.badge.font    = self.badgeFont;
+    self.badge.text    = (value > kRJBadgeDefaultMaximumBadgeNumber ?
+                         [NSString stringWithFormat:@"%@+", @(kRJBadgeDefaultMaximumBadgeNumber)] :
+                         [NSString stringWithFormat:@"%@" , @(value)]);
     [self adjustLabelFrame:self.badge];
 }
 
 - (void)hideBadge
 {
-    if (self.customView) {
-        self.customView.hidden = YES;
+    if (self.badgeCustomView) {
+        self.badgeCustomView.hidden = YES;
     }
-    self.badge.hidden          = YES;
+    self.badge.hidden = YES;
 }
 
 #pragma mark - private methods
+
+- (void)adjustCustomViewFrame:(UIView *)customView{
+    CGFloat offsetX = CGRectGetWidth(self.bounds) + self.badgeOffset.x;
+    customView.center = CGPointMake(offsetX, self.badgeOffset.y);
+}
+
 - (void)adjustDotFrame:(UILabel *)label
 {
     CGFloat width = (self.badgeRadius ?: kRJBadgeDefaultRadius) * 2;
@@ -189,35 +195,32 @@ static const CGFloat kRJBadgeDefaultRadius = 4.f;
 
 - (void)setBadgeImage:(UIImage *)badgeImage
 {
-    self.customView = [[UIImageView alloc] initWithImage:badgeImage];
+    self.badgeCustomView = [[UIImageView alloc] initWithImage:badgeImage];
     objc_setAssociatedObject(self,
                              @selector(badgeImage),
                              badgeImage,
                              OBJC_ASSOCIATION_RETAIN);
 }
 
-- (UIView *)customView {
+- (UIView *)badgeCustomView {
     return objc_getAssociatedObject(self, _cmd);
 }
 
-- (void)setCustomView:(UIView *)customView
+- (void)setBadgeCustomView:(UIView *)badgeCustomView
 {
-    if (self.customView == customView) return;
-    
-    if (self.customView) [self.customView removeFromSuperview];
-    
-    if (customView){
-        
-        objc_setAssociatedObject(self,
-                                 @selector(customView),
-                                 customView,
-                                 OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        
-        [self addSubview:customView];
+    if (self.badgeCustomView == badgeCustomView) return;
 
-        CGFloat offsetX     = CGRectGetWidth(self.bounds) + self.badgeOffset.x;
-        customView.center   = CGPointMake(offsetX, self.badgeOffset.y);
+    if (self.badgeCustomView) [self.badgeCustomView removeFromSuperview];
+    
+    objc_setAssociatedObject(self,
+                             @selector(badgeCustomView),
+                             badgeCustomView,
+                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    
+    if (self.badgeCustomView) {
+        [self addSubview:self.badgeCustomView];
     }
+    [self showBadge]; // refresh - in case of setting custom view after show badge
 }
 
 @end
