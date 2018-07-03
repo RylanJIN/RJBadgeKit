@@ -13,18 +13,6 @@
 #import "UIView+RJBadge.h"
 #import "RJBadgeController.h"
 
-#ifndef dispatch_queue_async_rjbk
-#define dispatch_queue_async_rjbk(queue, block)\
-    if (strcmp(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL), dispatch_queue_get_label(queue)) == 0) { \
-        block(); \
-    } else { \
-        dispatch_async(queue, block); \
-    }
-#endif
-
-#ifndef dispatch_main_async_rjbk
-#define dispatch_main_async_rjbk(block) dispatch_queue_async_rjbk(dispatch_get_main_queue(), block)
-#endif
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -133,7 +121,9 @@ NS_ASSUME_NONNULL_BEGIN
     pthread_mutex_unlock(&_mutex);
     
     if (badgeView && [badgeView conformsToProtocol:@protocol(RJBadgeView)]) {
-        dispatch_main_async_rjbk(^{ [badgeView hideBadge]; });
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [badgeView hideBadge];
+        });
     }
 }
 
@@ -283,7 +273,8 @@ NS_ASSUME_NONNULL_BEGIN
             id<RJBadgeView> badgeView = bInfo.badgeView;
             if (badgeView && [badgeView conformsToProtocol:@protocol(RJBadgeView)]) {
                 NSUInteger c = badge.count;
-                dispatch_main_async_rjbk(^{
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
                     if (c > 0) {
                         [badgeView showBadgeWithValue:c];
                     } else if (badge.needShow) {
@@ -313,7 +304,7 @@ NS_ASSUME_NONNULL_BEGIN
         id<RJBadgeView> badgeView = bInfo.badgeView;
         if (badgeView && [badgeView conformsToProtocol:@protocol(RJBadgeView)]) {
             NSUInteger c = badge.count;
-            dispatch_main_async_rjbk(^{
+            dispatch_async(dispatch_get_main_queue(), ^{
                 if (c > 0) {
                     [badgeView showBadgeWithValue:c];
                 } else if (badge.needShow) {

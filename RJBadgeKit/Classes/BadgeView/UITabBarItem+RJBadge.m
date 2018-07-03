@@ -28,12 +28,12 @@
 - (UIView *)badgeView
 {
     UIView *bottomView = [self valueForKeyPath:@"_view"]; // UITabbarButtion
-    UIView *parentView = nil; // UIImageView
+    UIView *targetView = nil; // UIImageView
     if (bottomView) {
-        parentView     = [self find:bottomView
+        targetView     = [self find:bottomView
               firstSubviewWithClass:NSClassFromString(@"UITabBarSwappableImageView")];
     }
-    return parentView;
+    return targetView;
 }
 
 - (UIView *)find:(UIView *)view firstSubviewWithClass:(Class)cls

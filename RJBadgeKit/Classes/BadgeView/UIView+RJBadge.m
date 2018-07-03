@@ -9,32 +9,24 @@
 #import "UIView+RJBadge.h"
 #import <objc/runtime.h>
 
-#define kRJBadgeDefaultFont                ([UIFont boldSystemFontOfSize:9])
+#define kRJBadgeDefaultFont                ([UIFont boldSystemFontOfSize:12])
 #define kRJBadgeDefaultMaximumBadgeNumber  99
 
-static const CGFloat kRJBadgeDefaultRadius = 3.f;
+static const CGFloat kRJBadgeDefaultRadius = 4.f;
 
 @implementation UIView (RJBadge)
 
 #pragma mark - RJBadgeView
 - (void)showBadge
 {
-    CGFloat offsetX = CGRectGetWidth(self.frame) + 2 + self.badgeOffset.x;
-    CGPoint center  = CGPointMake(offsetX, self.badgeOffset.y);
-
     if (self.badgeCustomView) {
         self.badgeCustomView.hidden   = NO;
         self.badge.hidden             = YES;
-        self.badgeCustomView.center   = center;
+        [self adjustCustomViewFrame:self.badgeCustomView];
     } else {
-        CGFloat w = (self.badgeRadius ? : kRJBadgeDefaultRadius) * 2;
-        CGRect  r = CGRectMake(CGRectGetWidth(self.frame), -w, w, w);
-        
-        self.badge.frame              = r;
         self.badge.text               = @"";
         self.badge.hidden             = NO;
-        self.badge.layer.cornerRadius = w / 2;
-        self.badge.center             = center;
+        [self adjustDotFrame:self.badge];
     }
 }
 
@@ -47,20 +39,7 @@ static const CGFloat kRJBadgeDefaultRadius = 3.f;
     self.badge.text    = (value > kRJBadgeDefaultMaximumBadgeNumber ?
                          [NSString stringWithFormat:@"%@+", @(kRJBadgeDefaultMaximumBadgeNumber)] :
                          [NSString stringWithFormat:@"%@" , @(value)]);
-    [self adjustLabelWidth:self.badge];
-    
-    CGRect frame       = self.badge.frame;
-    frame.size.width  += 4;
-    frame.size.height += 4;
-    
-    if(CGRectGetWidth(frame) < CGRectGetHeight(frame)) {
-        frame.size.width     = CGRectGetHeight(frame);
-    }
-    self.badge.frame  = frame;
-    CGFloat offsetX   = CGRectGetWidth(self.frame) + 2 + self.badgeOffset.x;
-    self.badge.center = CGPointMake(offsetX, self.badgeOffset.y);
-    
-    self.badge.layer.cornerRadius = CGRectGetHeight(self.badge.frame) / 2.f;
+    [self adjustLabelFrame:self.badge];
 }
 
 - (void)hideBadge
@@ -72,35 +51,40 @@ static const CGFloat kRJBadgeDefaultRadius = 3.f;
 }
 
 #pragma mark - private methods
-- (void)adjustLabelWidth:(UILabel *)label
+
+- (void)adjustCustomViewFrame:(UIView *)customView{
+    CGFloat offsetX = CGRectGetWidth(self.bounds) + self.badgeOffset.x;
+    customView.center = CGPointMake(offsetX, self.badgeOffset.y);
+}
+
+- (void)adjustDotFrame:(UILabel *)label
 {
-    [label setNumberOfLines:0];
+    CGFloat width = (self.badgeRadius ?: kRJBadgeDefaultRadius) * 2;
+    label.bounds = CGRectMake(0, 0, width, width);
+    label.layer.cornerRadius = width / 2;
     
-    NSString *s      = label.text;
-    UIFont *font     = [label font];
-    CGSize size      = CGSizeMake(320,2000);
-    
+    CGFloat offsetX   = CGRectGetWidth(self.bounds) + self.badgeOffset.x;
+    label.center = CGPointMake(offsetX, self.badgeOffset.y);
+}
+
+- (void)adjustLabelFrame:(UILabel *)label
+{
     CGSize labelsize = CGSizeZero;
+    labelsize        = [label.text boundingRectWithSize:CGSizeMake(CGFLOAT_MAX,CGFLOAT_MAX)
+                                options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
+                             attributes:@{NSFontAttributeName: label.font}
+                                context:nil].size;
+
     
-    if (![s respondsToSelector:@selector(boundingRectWithSize:options:attributes:context:)]) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        labelsize = [s sizeWithFont:font
-                  constrainedToSize:size
-                      lineBreakMode:NSLineBreakByWordWrapping];
-#pragma clang diagnostic pop
-    } else {
-        NSMutableParagraphStyle *style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
-        [style setLineBreakMode:NSLineBreakByWordWrapping];
-        
-        labelsize = [s boundingRectWithSize:size
-                                    options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
-                                 attributes:@{NSFontAttributeName: font, NSParagraphStyleAttributeName: style}
-                                    context:nil].size;
-    }
-    CGRect frame = label.frame;
-    frame.size   = CGSizeMake(ceilf(labelsize.width), ceilf(labelsize.height));
-    [label setFrame:frame];
+    label.bounds     = CGRectMake(0,
+                                  0,
+                                  ceilf(MAX(labelsize.width, labelsize.height)) + 2,
+                                  ceilf(labelsize.height) + 2);
+
+    CGFloat offsetX   = CGRectGetWidth(self.bounds) + self.badgeOffset.x;
+    label.center      = CGPointMake(offsetX, self.badgeOffset.y);
+    
+    label.layer.cornerRadius = CGRectGetHeight(label.bounds) / 2.f;
 }
 
 #pragma mark - setter/getter
@@ -108,23 +92,20 @@ static const CGFloat kRJBadgeDefaultRadius = 3.f;
 {
     UILabel *bLabel   = objc_getAssociatedObject(self, _cmd);
     if (!bLabel) {
-        CGFloat width = kRJBadgeDefaultRadius * 2;
-        CGRect rect   = CGRectMake(CGRectGetWidth(self.frame), -width, width, width);
-        bLabel                 = [[UILabel alloc] initWithFrame:rect];
+        bLabel                 = [[UILabel alloc] initWithFrame:CGRectZero];
         bLabel.textAlignment   = NSTextAlignmentCenter;
-        bLabel.backgroundColor = [UIColor colorWithRed:  1.f
-                                                 green: 93.f/225.f
-                                                  blue:165.f/255.f
+        bLabel.backgroundColor = [UIColor colorWithRed:0xFB/225.f
+                                                 green:0x2E/225.f
+                                                  blue:0x35/255.f
                                                  alpha:1.f];
         bLabel.textColor       = [UIColor whiteColor];
         bLabel.text            = @"";
-        // CGFloat offsetX     = CGRectGetWidth(self.frame) + 2 + self.badgeOffset.x;
-        // bLabel.center       = CGPointMake(offsetX, self.badgeOffset.y);
 
-        bLabel.layer.cornerRadius  = kRJBadgeDefaultRadius;
         bLabel.layer.masksToBounds = YES;
         bLabel.hidden              = YES;
         
+        [self adjustDotFrame:bLabel];
+
         objc_setAssociatedObject(self,
                                  _cmd,
                                  bLabel,
@@ -228,22 +209,16 @@ static const CGFloat kRJBadgeDefaultRadius = 3.f;
 - (void)setBadgeCustomView:(UIView *)badgeCustomView
 {
     if (self.badgeCustomView == badgeCustomView) return;
-    
+
     if (self.badgeCustomView) [self.badgeCustomView removeFromSuperview];
-    if (badgeCustomView)      [self addSubview:badgeCustomView];
     
     objc_setAssociatedObject(self,
                              @selector(badgeCustomView),
                              badgeCustomView,
                              OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    
     if (self.badgeCustomView) {
-        CGRect bound   = badgeCustomView.bounds;
-        bound.origin.x = CGRectGetWidth(self.frame);
-        bound.origin.y = -bound.size.height;
-        
-        self.badgeCustomView.frame     = bound;
-        // CGFloat offsetX             = CGRectGetWidth(self.frame) + 2 + self.badgeOffset.x;
-        // self.badgeCustomView.center = CGPointMake(offsetX, self.badgeOffset.y);
+        [self addSubview:self.badgeCustomView];
     }
     [self showBadge]; // refresh - in case of setting custom view after show badge
 }

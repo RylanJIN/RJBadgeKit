@@ -29,24 +29,28 @@ NSString * const RJMarkPath = @"root.mark";
     
     [self.badgeController observePath:demoPath badgeView:self.pageButton block:nil];
     
-    UIButton *mark   = [[UIButton alloc] initWithFrame:CGRectMake(0.0f, 12.0f, 25, 25.f)];
-    mark.badgeOffset = CGPointMake(-2, 6);
+
+    UIBarButtonItem *mark = [[UIBarButtonItem alloc] initWithTitle:@"mark" style:UIBarButtonItemStylePlain target:self action:@selector(markAction:)];
+    self.navigationItem.rightBarButtonItem = mark;
+    
+//    //    mark.badgeOffset = CGPointMake(0, 0); //It do not work, use:
+//    self.navigationItem.rightBarButtonItem.badgeOffset = CGPointMake(0, 0);
     
     [RJBadgeController setBadgeForKeyPath:RJMarkPath];
     
-    [self.badgeController observePath:RJMarkPath badgeView:mark block:nil];
+//    [self.badgeController observePath:RJMarkPath badgeView:mark block:nil];//It do not work, use:
+    [self.badgeController observePath:RJMarkPath badgeView:self.navigationItem.rightBarButtonItem block:nil];
+
     
-    [mark setTitle:@"Mark" forState:UIControlStateNormal];
-    [mark setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-    [mark addTarget:self action:@selector(markAction:) forControlEvents:(UIControlEventTouchUpInside)];
-    
-    UIBarButtonItem *barItem = [[UIBarButtonItem alloc] initWithCustomView:mark];
-    self.navigationItem.rightBarButtonItem = barItem;
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+    
+    //  After the navigationBar initialization is completed
+    self.navigationItem.rightBarButtonItem.badgeOffset = CGPointMake(0, 0);
+
     /**
      @note Example for refresh badge display of -'mark' button on navigation bar,
      which may not appear at first due to autolayout procedure of navigation items.
