@@ -33,8 +33,8 @@ NSString * const RJMarkPath = @"root.mark";
     UIBarButtonItem *mark = [[UIBarButtonItem alloc] initWithTitle:@"mark" style:UIBarButtonItemStylePlain target:self action:@selector(markAction:)];
     self.navigationItem.rightBarButtonItem = mark;
     
-    //    mark.badgeOffset = CGPointMake(0, 0); //It do not work, use:
-    self.navigationItem.rightBarButtonItem.badgeOffset = CGPointMake(0, 0);
+//    //    mark.badgeOffset = CGPointMake(0, 0); //It do not work, use:
+//    self.navigationItem.rightBarButtonItem.badgeOffset = CGPointMake(0, 0);
     
     [RJBadgeController setBadgeForKeyPath:RJMarkPath];
     
@@ -47,6 +47,10 @@ NSString * const RJMarkPath = @"root.mark";
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+    
+    //  After the navigationBar initialization is completed
+    self.navigationItem.rightBarButtonItem.badgeOffset = CGPointMake(0, 0);
+
     /**
      @note Example for refresh badge display of -'mark' button on navigation bar,
      which may not appear at first due to autolayout procedure of navigation items.
